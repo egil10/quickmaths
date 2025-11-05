@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>QuickMaths</title>
+<style>
+body {
+  font-family: 'Courier New', monospace;
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 10px;
+  background: #f0f0f0;
+  color: #000;
+}
+h1 { font-size: 18px; margin: 10px 0; }
+select, button {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  padding: 5px;
+  margin: 5px;
+}
+.question {
+  font-size: 24px;
+  margin: 20px 0;
+  padding: 10px;
+  background: #fff;
+  border: 1px solid #000;
+}
+.choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 20px 0;
+}
+.choice {
+  padding: 10px;
+  background: #fff;
+  border: 2px solid #000;
+  cursor: pointer;
+  text-align: center;
+  font-size: 18px;
+}
+.choice:hover { background: #e0e0e0; }
+.elo {
+  font-size: 12px;
+  margin: 10px 0;
+  color: #666;
+}
+.feedback {
+  font-size: 14px;
+  margin: 10px 0;
+  min-height: 20px;
+}
+</style>
+</head>
+<body>
+<h1>QuickMaths</h1>
+<div class="elo">ELO: <span id="elo">1000</span></div>
+<div>
+  <select id="digits1">
+    <option value="1">1 digit</option>
+    <option value="2">2 digits</option>
+    <option value="3">3 digits</option>
+  </select>
+  ×
+  <select id="digits2">
+    <option value="1">1 digit</option>
+    <option value="2">2 digits</option>
+    <option value="3">3 digits</option>
+  </select>
+  <button onclick="newQuestion()">New Question</button>
+</div>
+<div class="question" id="question"></div>
+<div class="choices" id="choices"></div>
+<div class="feedback" id="feedback"></div>
+
+<script>
+let elo = parseInt(localStorage.getItem('elo') || '1000');
+let answer = 0;
+let correctIndex = 0;
+
+function updateElo() {
+  document.getElementById('elo').textContent = elo;
+  localStorage.setItem('elo', elo);
+}
+
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function generateNumber(digits) {
+  const min = Math.pow(10, digits - 1);
+  const max = Math.pow(10, digits) - 1;
+  return randomInt(min, max);
+}
+
+function generateChoices(correct) {
+  const choices = [correct];
+  while (choices.length < 4) {
+    const offset = randomInt(-Math.abs(correct) * 0.3, Math.abs(correct) * 0.3);
+    const wrong = correct + offset;
+    if (wrong > 0 && !choices.includes(wrong)) {
+      choices.push(wrong);
+    }
+  }
+  for (let i = choices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [choices[i], choices[j]] = [choices[j], choices[i]];
+  }
+  correctIndex = choices.indexOf(correct);
+  return choices;
+}
+
+function newQuestion() {
+  const d1 = parseInt(document.getElementById('digits1').value);
+  const d2 = parseInt(document.getElementById('digits2').value);
+  const num1 = generateNumber(d1);
+  const num2 = generateNumber(d2);
+  answer = num1 * num2;
+  
+  document.getElementById('question').textContent = `${num1} × ${num2} = ?`;
+  document.getElementById('feedback').textContent = '';
+  
+  const choices = generateChoices(answer);
+  const choicesDiv = document.getElementById('choices');
+  choicesDiv.innerHTML = '';
+  
+  choices.forEach((choice, i) => {
+    const btn = document.createElement('div');
+    btn.className = 'choice';
+    btn.textContent = choice;
+    btn.onclick = () => selectAnswer(i === correctIndex);
+    choicesDiv.appendChild(btn);
+  });
+}
+
+function selectAnswer(isCorrect) {
+  const feedback = document.getElementById('feedback');
+  if (isCorrect) {
+    feedback.textContent = 'Correct!';
+    elo += 5;
+  } else {
+    feedback.textContent = `Wrong! Answer was ${answer}`;
+    elo = Math.max(0, elo - 10);
+  }
+  updateElo();
+  setTimeout(() => newQuestion(), 1000);
+}
+
+updateElo();
+newQuestion();
+</script>
+</body>
+</html>
+
