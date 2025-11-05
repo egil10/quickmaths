@@ -97,9 +97,10 @@ function generateNumber(digits) {
 function generateChoices(correct) {
   const choices = [correct];
   while (choices.length < 4) {
-    const offset = randomInt(-Math.abs(correct) * 0.3, Math.abs(correct) * 0.3);
+    const range = Math.max(10, Math.floor(correct * 0.3));
+    const offset = randomInt(-range, range);
     const wrong = correct + offset;
-    if (wrong > 0 && !choices.includes(wrong)) {
+    if (wrong > 0 && wrong !== correct && !choices.includes(wrong)) {
       choices.push(wrong);
     }
   }
